@@ -1,0 +1,55 @@
+[versions]
+agp = "8.7.3"
+
+gson = "2.10.1"
+kotlin = "2.0.0"
+coreKtx = "1.16.0"
+junit = "4.13.2"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
+lifecycleRuntimeKtx = "2.9.0"
+activityCompose = "1.10.1"
+composeBom = "2025.05.01" # Используйте актуальную версию BOM
+gmsVersion = "4.4.2"
+firebaseBom = "33.14.0" # Переименовал bomVersion в firebaseBom для ясности
+composeCalendar = "2.5.0" # Обновил версию для календаря
+mapsCompose = "4.3.2"
+navigationCompose = "2.9.0" # Версия навигации, которая использовалась ранее в коде. Можно обновить до 2.9.0, если хотите.
+kotlinxCoroutines = "1.7.3" # Добавляем версию для корутин
+playServicesMaps = "19.2.0"
+
+[libraries]
+androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" } # Версия будет браться из composeBom
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+
+compose-calendar = { module = "com.kizitonwose.calendar:compose", version.ref = "composeCalendar" }
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" } # Переименовано
+firebase-storage = { group = "com.google.firebase", name = "firebase-storage-ktx"}
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore-ktx"}
+firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx"} # Используем ktx версию
+
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" } # Добавляем
+
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+maps-compose = { module = "com.google.maps.android:maps-compose", version.ref = "mapsCompose" }
+play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "playServicesMaps" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+gms = { id = "com.google.gms.google-services", version.ref = "gmsVersion" }
