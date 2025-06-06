@@ -14,10 +14,22 @@ class ConcertRepository(private val firestore: FirebaseFirestore) {
 
     // Сохраняет или обновляет концерт
     suspend fun saveConcert(concert: Concert) {
+        // Создаем карту данных с учетом участников
+        val concertData = mapOf(
+            "date" to concert.date,
+            "address" to concert.address,
+            "description" to concert.description,
+            "distanceKmFromVoronezh" to concert.distanceKmFromVoronezh,
+            "departureTime" to concert.departureTime,
+            "startTime" to concert.startTime,
+            "concertType" to concert.concertType,
+            "members" to concert.members // Сохраняем список участников
+        )
+
         if (concert.id.isEmpty()) {
-            concertsCollection.add(concert).await()
+            concertsCollection.add(concertData).await()
         } else {
-            concertsCollection.document(concert.id).set(concert).await()
+            concertsCollection.document(concert.id).set(concertData).await()
         }
     }
 
@@ -67,7 +79,6 @@ class ConcertRepository(private val firestore: FirebaseFirestore) {
                 .whereGreaterThanOrEqualTo("date", startDate)
                 .whereLessThanOrEqualTo("date", endDate)
         } else {
-            // Загружаем все концерты, начиная с startDate, без верхней границы
             concertsCollection
                 .whereGreaterThanOrEqualTo("date", startDate)
         }
@@ -99,3 +110,6 @@ class ConcertRepository(private val firestore: FirebaseFirestore) {
         concertsCollection.document(concertId).delete().await()
     }
 }
+
+
+

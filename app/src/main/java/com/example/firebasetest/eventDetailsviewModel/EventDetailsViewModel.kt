@@ -27,9 +27,6 @@ class EventDetailsViewModel(
     private val concertId: String? = null
 ) : ViewModel() {
 
-    private val _concert = MutableStateFlow<Concert?>(null)
-    val concert: StateFlow<Concert?> = _concert.asStateFlow()
-
     private val _address = MutableStateFlow("")
     val address: StateFlow<String> = _address.asStateFlow()
 
@@ -51,6 +48,16 @@ class EventDetailsViewModel(
     private val _uiState = MutableStateFlow<EventDetailsUiState>(EventDetailsUiState.Idle)
     val uiState: StateFlow<EventDetailsUiState> = _uiState.asStateFlow()
 
+    // Состояния для управления участниками
+    private val _members = MutableStateFlow<List<String>>(emptyList())
+    val members: StateFlow<List<String>> = _members.asStateFlow()
+
+    private val _showAddMemberDialog = MutableStateFlow(false)
+    val showAddMemberDialog: StateFlow<Boolean> = _showAddMemberDialog.asStateFlow()
+
+    private val _newMemberName = MutableStateFlow("")
+    val newMemberName: StateFlow<String> = _newMemberName.asStateFlow()
+
     init {
         concertId?.let { loadConcertById(it) }
     }
@@ -61,13 +68,13 @@ class EventDetailsViewModel(
             try {
                 val existingConcert = concertRepository.getConcertById(id)
                 if (existingConcert != null) {
-                    _concert.value = existingConcert
                     _address.value = existingConcert.address
                     _description.value = existingConcert.description
                     _distance.value = existingConcert.distanceKmFromVoronezh.toString()
                     _departureTime.value = existingConcert.departureTime
                     _startTime.value = existingConcert.startTime
                     _selectedConcertType.value = existingConcert.getConcertTypeEnum()
+                    _members.value = existingConcert.members // Загружаем участников
                     _uiState.value = EventDetailsUiState.Success("Концерт загружен успешно.")
                 } else {
                     _uiState.value = EventDetailsUiState.Error("Концерт не найден.")
@@ -84,6 +91,27 @@ class EventDetailsViewModel(
     fun onDepartureTimeChange(newTime: String) { _departureTime.value = newTime }
     fun onStartTimeChange(newTime: String) { _startTime.value = newTime }
     fun onConcertTypeChange(newType: ConcertType) { _selectedConcertType.value = newType }
+    fun onNewMemberNameChange(name: String) { _newMemberName.value = name }
+
+    fun showAddMemberDialog() {
+        _showAddMemberDialog.value = true
+    }
+
+    fun hideAddMemberDialog() {
+        _showAddMemberDialog.value = false
+        _newMemberName.value = ""
+    }
+
+    fun addMember() {
+        if (_newMemberName.value.isNotBlank()) {
+            _members.value = _members.value + _newMemberName.value
+            _newMemberName.value = ""
+        }
+    }
+
+    fun removeMember(index: Int) {
+        _members.value = _members.value.toMutableList().apply { removeAt(index) }
+    }
 
     fun saveConcert() {
         if (_address.value.isBlank() || _description.value.isBlank() ||
@@ -114,7 +142,8 @@ class EventDetailsViewModel(
                     distanceKmFromVoronezh = distanceInt,
                     departureTime = _departureTime.value,
                     startTime = _startTime.value,
-                    concertType = _selectedConcertType.value.name
+                    concertType = _selectedConcertType.value.name,
+                    members = _members.value // Сохраняем участников
                 )
                 concertRepository.saveConcert(concertToSave)
                 _uiState.value = EventDetailsUiState.Success("Концерт успешно сохранен.")
@@ -162,8 +191,7 @@ class EventDetailsViewModel(
         }
     }
 }
-
-
+//+ изменил 1 раз
 
 
 

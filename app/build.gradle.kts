@@ -86,4 +86,6 @@ dependencies {
 
     // ... другие зависимости
     implementation (libs.gson) // Добавьте эту строку
+
+    implementation (libs.androidx.runtime.livedata)
 }

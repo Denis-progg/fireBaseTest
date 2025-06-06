@@ -1,28 +1,37 @@
-package com.example.firebasetest.evenDetailScreen
+package com.example.firebasetest.eventDetailScreen
 
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.util.*
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.firebasetest.appNavigation.Routes
+import com.example.firebasetest.auth.UserRole
+import com.example.firebasetest.auth.UserRoleManager
 import com.example.firebasetest.concert.ConcertType
 import com.example.firebasetest.eventDetailsviewModel.EventDetailsUiState
 import com.example.firebasetest.eventDetailsviewModel.EventDetailsViewModel
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.TextButton
-import com.example.firebasetest.auth.UserRoleManager // НОВЫЙ ИМПОРТ
-import com.example.firebasetest.auth.UserRole // НОВЫЙ ИМПОРТ
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,6 +54,9 @@ fun EventDetailsScreen(
     val startTime by viewModel.startTime.collectAsState()
     val selectedConcertType by viewModel.selectedConcertType.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
+    val members by viewModel.members.collectAsState()
+    val showAddMemberDialog by viewModel.showAddMemberDialog.collectAsState()
+    val newMemberName by viewModel.newMemberName.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     var showDeleteConfirmationDialog by remember { mutableStateOf(false) }
@@ -90,7 +102,7 @@ fun EventDetailsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
-                .imePadding()
+                .verticalScroll(rememberScrollState())
         ) {
             // --- Выбор типа концерта ---
             var expanded by remember { mutableStateOf(false) }
@@ -108,7 +120,13 @@ fun EventDetailsScreen(
                         .fillMaxWidth()
                         .menuAnchor()
                         .clickable(enabled = isAdmin) { expanded = !expanded }, // Только ADMIN может кликнуть
-                    enabled = isAdmin && uiState != EventDetailsUiState.Loading
+                    enabled = isAdmin && uiState != EventDetailsUiState.Loading,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledContainerColor = MaterialTheme.colorScheme.surface,
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 )
 
                 ExposedDropdownMenu(
@@ -137,7 +155,12 @@ fun EventDetailsScreen(
                 label = { Text("Адрес концерта") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                enabled = isAdmin && uiState != EventDetailsUiState.Loading
+                enabled = isAdmin && uiState != EventDetailsUiState.Loading,
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                    disabledContainerColor = MaterialTheme.colorScheme.surface,
+                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -149,7 +172,12 @@ fun EventDetailsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 100.dp),
-                enabled = isAdmin && uiState != EventDetailsUiState.Loading
+                enabled = isAdmin && uiState != EventDetailsUiState.Loading,
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                    disabledContainerColor = MaterialTheme.colorScheme.surface,
+                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -165,7 +193,12 @@ fun EventDetailsScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                enabled = isAdmin && uiState != EventDetailsUiState.Loading
+                enabled = isAdmin && uiState != EventDetailsUiState.Loading,
+                colors = OutlinedTextFieldDefaults.colors(
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                    disabledContainerColor = MaterialTheme.colorScheme.surface,
+                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -181,7 +214,12 @@ fun EventDetailsScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f),
                     singleLine = true,
-                    enabled = isAdmin && uiState != EventDetailsUiState.Loading
+                    enabled = isAdmin && uiState != EventDetailsUiState.Loading,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledContainerColor = MaterialTheme.colorScheme.surface,
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 )
                 Spacer(modifier = Modifier.width(16.dp))
 
@@ -193,9 +231,99 @@ fun EventDetailsScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.weight(1f),
                     singleLine = true,
-                    enabled = isAdmin && uiState != EventDetailsUiState.Loading
+                    enabled = isAdmin && uiState != EventDetailsUiState.Loading,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledContainerColor = MaterialTheme.colorScheme.surface,
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 )
             }
+
+            // ==== Секция участников концерта ====
+            Spacer(modifier = Modifier.height(24.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Состав на концерт",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+
+                if (isAdmin) {
+                    IconButton(
+                        onClick = { viewModel.showAddMemberDialog() },
+                        enabled = uiState != EventDetailsUiState.Loading
+                    ) {
+                        Icon(Icons.Filled.Add, contentDescription = "Добавить участника")
+                    }
+                }
+            }
+
+            if (members.isEmpty()) {
+                Text(
+                    text = "Участники не добавлены",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
+            } else {
+                // Таблица участников
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Column {
+                        members.forEachIndexed { index, member ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "${index + 1}.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.width(24.dp)
+                                )
+                                Text(
+                                    text = member,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.weight(1f).padding(start = 8.dp)
+                                )
+
+                                if (isAdmin) {
+                                    IconButton(
+                                        onClick = { viewModel.removeMember(index) },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Filled.Close,
+                                            contentDescription = "Удалить",
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
+                            }
+
+                            if (index < members.lastIndex) {
+                                Divider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    thickness = 1.dp,
+                                    color = MaterialTheme.colorScheme.surfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             // Кнопки Сохранить, Отменить и Удалить
@@ -215,7 +343,7 @@ fun EventDetailsScreen(
                     onClick = onBackClick,
                     enabled = uiState != EventDetailsUiState.Loading
                 ) {
-                    Text("Назад") // Переименовано с "Отменить" на "Назад", так как для USER это просто возврат
+                    Text("Назад")
                 }
 
                 // Кнопка "Удалить" (только для ADMIN и если редактируем существующий концерт)
@@ -254,5 +382,43 @@ fun EventDetailsScreen(
                 }
             )
         }
+
+        // ==== Диалог добавления участника ====
+        if (showAddMemberDialog) {
+            AlertDialog(
+                onDismissRequest = { viewModel.hideAddMemberDialog() },
+                title = { Text("Добавить участника") },
+                text = {
+                    Column {
+                        Text("Введите ФИО участника:",
+                            modifier = Modifier.padding(bottom = 8.dp))
+                        OutlinedTextField(
+                            value = newMemberName,
+                            onValueChange = { viewModel.onNewMemberNameChange(it) },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            placeholder = { Text("Фамилия Имя Отчество") }
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            viewModel.addMember()
+                            viewModel.hideAddMemberDialog()
+                        },
+                        enabled = newMemberName.isNotBlank()
+                    ) {
+                        Text("Добавить")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.hideAddMemberDialog() }) {
+                        Text("Отмена")
+                    }
+                }
+            )
+        }
     }
 }
+//+1
