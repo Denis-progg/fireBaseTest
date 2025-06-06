@@ -1,3 +1,4 @@
+// package com.example.firebasetest.concert
 package com.example.firebasetest.concert
 
 import com.google.firebase.firestore.DocumentId
@@ -5,6 +6,8 @@ import com.google.firebase.firestore.ServerTimestamp
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.Date
+
+
 
 data class Concert(
     @DocumentId
@@ -16,7 +19,9 @@ data class Concert(
     val departureTime: String = "",
     val startTime: String = "",
     val concertType: String = ConcertType.UNKNOWN.name,
-    val members: List<String> = emptyList(), // Новое поле для участников
+    val members: List<String> = emptyList(),
+    val busSeats: Map<Int, List<String>> = emptyMap(), // Места в автобусе (номер ряда -> List<String> имен)
+    val driverName: String = "", // Имя водителя
     @ServerTimestamp
     val timestamp: Date? = null
 ) {
@@ -52,4 +57,4 @@ data class Concert(
         }
     }
 }
-//+ менял 1 раз контр z
+//+ менял 2 раз контр z

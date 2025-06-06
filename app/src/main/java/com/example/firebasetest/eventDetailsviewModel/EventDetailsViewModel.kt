@@ -1,3 +1,6 @@
+
+
+// package com.example.firebasetest.eventDetailsviewModel
 package com.example.firebasetest.eventDetailsviewModel
 
 import androidx.lifecycle.ViewModel
@@ -48,7 +51,6 @@ class EventDetailsViewModel(
     private val _uiState = MutableStateFlow<EventDetailsUiState>(EventDetailsUiState.Idle)
     val uiState: StateFlow<EventDetailsUiState> = _uiState.asStateFlow()
 
-    // Состояния для управления участниками
     private val _members = MutableStateFlow<List<String>>(emptyList())
     val members: StateFlow<List<String>> = _members.asStateFlow()
 
@@ -57,6 +59,21 @@ class EventDetailsViewModel(
 
     private val _newMemberName = MutableStateFlow("")
     val newMemberName: StateFlow<String> = _newMemberName.asStateFlow()
+
+    // Изменено на Map<Int, List<String>>
+    private val _busSeats = MutableStateFlow<Map<Int, List<String>>>(emptyMap())
+    val busSeats: StateFlow<Map<Int, List<String>>> = _busSeats.asStateFlow()
+
+    private val _driverName = MutableStateFlow("")
+    val driverName: StateFlow<String> = _driverName.asStateFlow()
+
+    // Для выбора места: номер ряда (от 1 до 13) и позиция в ряду (0-3)
+    private val _selectedSeatRow = MutableStateFlow<Int?>(null) // Номер ряда
+    val selectedSeatRow: StateFlow<Int?> = _selectedSeatRow.asStateFlow()
+
+    private val _selectedSeatIndexInRow = MutableStateFlow<Int?>(null) // Индекс места в ряду (0, 1, 2, 3)
+    val selectedSeatIndexInRow: StateFlow<Int?> = _selectedSeatIndexInRow.asStateFlow()
+
 
     init {
         concertId?.let { loadConcertById(it) }
@@ -72,9 +89,13 @@ class EventDetailsViewModel(
                     _description.value = existingConcert.description
                     _distance.value = existingConcert.distanceKmFromVoronezh.toString()
                     _departureTime.value = existingConcert.departureTime
+
+
                     _startTime.value = existingConcert.startTime
                     _selectedConcertType.value = existingConcert.getConcertTypeEnum()
-                    _members.value = existingConcert.members // Загружаем участников
+                    _members.value = existingConcert.members
+                    _busSeats.value = existingConcert.busSeats
+                    _driverName.value = existingConcert.driverName
                     _uiState.value = EventDetailsUiState.Success("Концерт загружен успешно.")
                 } else {
                     _uiState.value = EventDetailsUiState.Error("Концерт не найден.")
@@ -92,6 +113,7 @@ class EventDetailsViewModel(
     fun onStartTimeChange(newTime: String) { _startTime.value = newTime }
     fun onConcertTypeChange(newType: ConcertType) { _selectedConcertType.value = newType }
     fun onNewMemberNameChange(name: String) { _newMemberName.value = name }
+    fun onDriverNameChange(name: String) { _driverName.value = name }
 
     fun showAddMemberDialog() {
         _showAddMemberDialog.value = true
@@ -110,12 +132,90 @@ class EventDetailsViewModel(
     }
 
     fun removeMember(index: Int) {
+        val removedMember = _members.value[index]
         _members.value = _members.value.toMutableList().apply { removeAt(index) }
+
+        // Также нужно проверить, не сидит ли этот участник в автобусе, и очистить его место
+        val newBusSeats = _busSeats.value.toMutableMap()
+        newBusSeats.forEach { (row, namesInRow) ->
+            val newNamesInRow = namesInRow.toMutableList()
+            var changed = false
+            for (i in newNamesInRow.indices) {
+                if (newNamesInRow[i] == removedMember) {
+                    newNamesInRow[i] = ""
+                    changed = true
+                }
+            }
+            if (changed) {
+                newBusSeats[row] = newNamesInRow
+            }
+        }
+        _busSeats.value = newBusSeats
+    }
+
+    fun selectSeat(row: Int?, indexInRow: Int?) {
+        _selectedSeatRow.value = row
+        _selectedSeatIndexInRow.value = indexInRow
+    }
+
+    fun assignMemberToSeat(memberName: String) {
+        _selectedSeatRow.value?.let { selectedRow ->
+            _selectedSeatIndexInRow.value?.let { selectedIndex ->
+                val newBusSeats = _busSeats.value.toMutableMap()
+
+                // Сначала удаляем участника с любого другого места
+                newBusSeats.forEach { (row, namesInRow) ->
+                    val newNamesInRow = namesInRow.toMutableList()
+                    var changed = false
+                    for (i in newNamesInRow.indices) {
+                        if (newNamesInRow[i] == memberName) {
+                            newNamesInRow[i] = ""
+                            changed = true
+                        }
+                    }
+                    if (changed) {
+                        newBusSeats[row] = newNamesInRow
+                    }
+                }
+
+                // Теперь назначаем участника на выбранное место
+                val currentNamesInRow = newBusSeats[selectedRow]?.toMutableList() ?: mutableListOf("", "", "", "")
+                // Убедимся, что список достаточно большой
+                while (currentNamesInRow.size <= selectedIndex) {
+                    currentNamesInRow.add("")
+                }
+                currentNamesInRow[selectedIndex] = memberName
+
+
+                newBusSeats[selectedRow] = currentNamesInRow
+                _busSeats.value = newBusSeats
+            }
+        }
+        _selectedSeatRow.value = null
+        _selectedSeatIndexInRow.value = null
+    }
+
+    fun clearSeat(row: Int, indexInRow: Int) {
+        val newBusSeats = _busSeats.value.toMutableMap()
+        val currentNamesInRow = newBusSeats[row]?.toMutableList() ?: mutableListOf("", "", "", "")
+
+        if (indexInRow < currentNamesInRow.size) {
+            currentNamesInRow[indexInRow] = ""
+        }
+
+        // Если все места в ряду пусты, можно удалить этот ряд из карты
+        // Но лучше оставить, чтобы не терять структуру ряда (особенно для 7-го ряда)
+        // if (currentNamesInRow.all { it.isBlank() }) {
+        //    newBusSeats.remove(row)
+        // } else {
+        newBusSeats[row] = currentNamesInRow
+        // }
+        _busSeats.value = newBusSeats
     }
 
     fun saveConcert() {
-        if (_address.value.isBlank() || _description.value.isBlank() ||
-            _departureTime.value.isBlank() || _startTime.value.isBlank()) {
+        if (_address.value.isBlank() || _description.value.isBlank()
+            || _departureTime.value.isBlank() || _startTime.value.isBlank()) {
             _uiState.value = EventDetailsUiState.Error("Заполните все обязательные поля.")
             return
         }
@@ -143,7 +243,9 @@ class EventDetailsViewModel(
                     departureTime = _departureTime.value,
                     startTime = _startTime.value,
                     concertType = _selectedConcertType.value.name,
-                    members = _members.value // Сохраняем участников
+                    members = _members.value,
+                    busSeats = _busSeats.value,
+                    driverName = _driverName.value
                 )
                 concertRepository.saveConcert(concertToSave)
                 _uiState.value = EventDetailsUiState.Success("Концерт успешно сохранен.")
@@ -181,6 +283,8 @@ class EventDetailsViewModel(
     }
 
     class Factory(private val selectedDate: LocalDate, private val concertId: String? = null) : ViewModelProvider.Factory {
+
+
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             if (modelClass.isAssignableFrom(EventDetailsViewModel::class.java)) {
                 val firestore = FirebaseFirestore.getInstance()
@@ -191,7 +295,8 @@ class EventDetailsViewModel(
         }
     }
 }
-//+ изменил 1 раз
+
+//+
 
 
 

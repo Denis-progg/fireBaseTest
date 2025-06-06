@@ -1,3 +1,4 @@
+
 package com.example.firebasetest.concert
 
 import com.google.firebase.firestore.FirebaseFirestore
@@ -8,13 +9,14 @@ import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
 import java.time.YearMonth
 
+// Enum ConcertType уже был в этом файле, его содержание не меняется
+// enum class ConcertType { ... }
+
 class ConcertRepository(private val firestore: FirebaseFirestore) {
 
     private val concertsCollection = firestore.collection("concerts")
 
-    // Сохраняет или обновляет концерт
     suspend fun saveConcert(concert: Concert) {
-        // Создаем карту данных с учетом участников
         val concertData = mapOf(
             "date" to concert.date,
             "address" to concert.address,
@@ -23,7 +25,9 @@ class ConcertRepository(private val firestore: FirebaseFirestore) {
             "departureTime" to concert.departureTime,
             "startTime" to concert.startTime,
             "concertType" to concert.concertType,
-            "members" to concert.members // Сохраняем список участников
+            "members" to concert.members,
+            "busSeats" to concert.busSeats,
+            "driverName" to concert.driverName // Сохраняем имя водителя
         )
 
         if (concert.id.isEmpty()) {
@@ -33,12 +37,10 @@ class ConcertRepository(private val firestore: FirebaseFirestore) {
         }
     }
 
-    // Получает концерт по ID
     suspend fun getConcertById(concertId: String): Concert? {
         return concertsCollection.document(concertId).get().await().toObject(Concert::class.java)?.copy(id = concertId)
     }
 
-    // Получает все концерты на определенную дату
     fun getConcertsForDate(date: LocalDate): Flow<List<Concert>> {
         val concertsForDateFlow = MutableStateFlow<List<Concert>>(emptyList())
         val dateString = date.toString()
@@ -63,12 +65,10 @@ class ConcertRepository(private val firestore: FirebaseFirestore) {
         return concertsForDateFlow
     }
 
-    // Получает все концерты за указанный месяц
     fun getConcertsForMonth(yearMonth: YearMonth): Flow<Map<LocalDate, List<Concert>>> {
         return getConcertsForMonthRange(yearMonth, yearMonth)
     }
 
-    // Получает концерты за диапазон месяцев или все будущие концерты
     fun getConcertsForMonthRange(startMonth: YearMonth, endMonth: YearMonth? = null): Flow<Map<LocalDate, List<Concert>>> {
         val concertsMapFlow = MutableStateFlow<Map<LocalDate, List<Concert>>>(emptyMap())
 
@@ -95,7 +95,9 @@ class ConcertRepository(private val firestore: FirebaseFirestore) {
                 }
                 val map = concerts
                     .filter { it.getLocalDate() != null }
-                    .groupBy { it.getLocalDate()!! }
+
+
+                .groupBy { it.getLocalDate()!! }
                     .mapValues { (_, value) -> value.sortedBy { it.getConcertTypeEnum().ordinal } }
                 concertsMapFlow.value = map
             } else {
@@ -105,11 +107,7 @@ class ConcertRepository(private val firestore: FirebaseFirestore) {
         return concertsMapFlow
     }
 
-    // Удаляет концерт по ID
     suspend fun deleteConcert(concertId: String) {
         concertsCollection.document(concertId).delete().await()
     }
 }
-
-
-
